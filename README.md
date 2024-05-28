@@ -18,7 +18,7 @@ You can install the required packages using pip:
 
 ```sh
 pip install pywin32 matplotlib
-
+```
 
 ## Constants
 
@@ -30,17 +30,18 @@ pip install pywin32 matplotlib
 
 Returns the name of the currently active window.
 
-
+```
 def get_active_window_name():
     """Returns the name of the currently active window."""
     window = win32gui.GetForegroundWindow()
     return win32gui.GetWindowText(window)
+```
 
 ### `load_activities(filepath)`
 
-
 Loads activities from a JSON file. If the file does not exist or contains invalid JSON, it returns an empty dictionary.
 
+```
 def load_activities(filepath):
     """Loads activities from a JSON file."""
     try:
@@ -48,22 +49,24 @@ def load_activities(filepath):
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
-
+```
 
 ### `save_activities(filepath, activities)`
 
 Saves the activities dictionary to a JSON file.
 
+```
 def save_activities(filepath, activities):
     """Saves activities to a JSON file."""
     with open(filepath, "w") as f:
         json.dump(activities, f, indent=4)
-
+```
 
 ### `add_time_entry(activities, activity_name, start_time, end_time)`
 
 Adds a time entry for a specific activity to the activities dictionary.
 
+```
 def add_time_entry(activities, activity_name, start_time, end_time):
     """Adds a time entry to the activities dictionary."""
     if activity_name not in activities:
@@ -73,13 +76,12 @@ def add_time_entry(activities, activity_name, start_time, end_time):
         "end_time": end_time.strftime("%Y-%m-%d %H:%M:%S"),
         "duration": (end_time - start_time).total_seconds()
     })
-
-
+```
 
 ### `plot_activities(activities)`
 
 Plots the durations of the activities over time using matplotlib.
-
+```
 def plot_activities(activities):
     """Plots the durations of the activities over time."""
     num_activities = len(activities)
@@ -96,13 +98,13 @@ def plot_activities(activities):
         axs[i].set_ylabel('Frequency')
 
     plt.show()
-
-
+```
 
 ### `track_activities()`
 
 Tracks the active window and records the time spent on each activity. Saves data periodically and plots the results when interrupted.
 
+```
 def track_activities():
     """Tracks the active window and records time spent on each activity."""
     activities = load_activities(ACTIVITIES_FILE)
@@ -125,12 +127,17 @@ def track_activities():
         add_time_entry(activities, active_window_name, start_time, end_time)
         save_activities(ACTIVITIES_FILE, activities)
         plot_activities(activities)
-
+```
 
 ## Running the Script
 
 To run the Activity Tracker, execute the script from the command line:
 
-
+```
 python activity_tracker.py
+```
 
+## Notes
+
+- Ensure you have the necessary permissions to access and manipulate the active window information on your operating system.
+- The script is designed to work on Windows due to the use of `win32gui` for window management. Adaptations are required for other operating systems.
