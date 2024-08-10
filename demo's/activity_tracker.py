@@ -9,7 +9,6 @@ import matplotlib.pyplot as plt
 from dateutil import parser
 import uiautomation as auto
 
-
 ALPHA = 0.8
 SECONDS_PER_HOUR = 3600
 ACTIVITIES_FILE = "activities.json"
@@ -17,16 +16,6 @@ JSON_DUMP_PARAMS = {"indent": 4, "sort_keys": True}
 
 
 class Activity:
-    """A class representing an activity.
-
-    Attributes:
-        name (str): The name of the activity.
-        time_entries (list of TimeEntry): A list of time entries for this activity.
-
-    Methods:
-        serialize(): Returns a serialized dictionary representation of the activity.
-    """
-
     def __init__(self, name, time_entries):
         self.name = name
         self.time_entries = time_entries
@@ -39,17 +28,6 @@ class Activity:
 
 
 class TimeEntry:
-    """A class representing a time entry.
-
-    Attributes:
-        start_time (datetime.datetime): The start time of the time entry.
-        end_time (datetime.datetime): The end time of the time entry.
-        total_time (datetime.timedelta): The total time elapsed during the time entry.
-
-    Methods:
-        serialize(): Returns a serialized dictionary representation of the time entry.
-    """
-
     def __init__(self, start_time, end_time):
         self.start_time = start_time
         self.end_time = end_time
@@ -74,17 +52,6 @@ class TimeEntry:
 
 
 class ActivityList:
-    """A class representing a list of activities.
-
-    Attributes:
-        activities (list of Activity): A list of activities.
-
-    Methods:
-        initialize(filepath): Initializes the activity list from a JSON file.
-        serialize(): Returns a serialized dictionary representation of the activity list.
-        plot_activities(): Plots a graph of the durations of the activities over time.
-    """
-
     def __init__(self):
         self.activities = []
 
@@ -93,19 +60,22 @@ class ActivityList:
             with open(filepath, "r") as f:
                 data = json.load(f)
                 self.activities = [Activity(activity["name"],
-                                   self._get_time_entries_from_json(activity))
+                                            self._get_time_entries_from_json(activity))
                                    for activity in data["activities"]]
-
         except FileNotFoundError:
-            print("No JSON file found.")
+            print("No JSON file found. Creating a new file...")
+            self._create_empty_json(filepath)
         except json.decoder.JSONDecodeError:
             print("Invalid JSON data in activities.json. Creating a new file...")
-            with open(filepath, "w") as f:
-                json.dump({"activities": []}, f, **JSON_DUMP_PARAMS)
+            self._create_empty_json(filepath)
+
+    def _create_empty_json(self, filepath):
+        with open(filepath, "w") as f:
+            json.dump({"activities": []}, f, **JSON_DUMP_PARAMS)
 
     def _get_time_entries_from_json(self, data):
         return [TimeEntry(parser.parse(entry["start_time"]),
-                parser.parse(entry["end_time"]))
+                          parser.parse(entry["end_time"]))
                 for entry in data["time_entries"]]
 
     def serialize(self):
@@ -118,7 +88,7 @@ class ActivityList:
         fig, axs = plt.subplots(1, num_activities, figsize=(15, 5))
         for i, activity in enumerate(self.activities):
             all_durations = [entry.total_time.total_seconds() / SECONDS_PER_HOUR
-                            for entry in activity.time_entries]
+                             for entry in activity.time_entries]
             axs[i].hist(all_durations, alpha=ALPHA)
             axs[i].set_title(activity.name)
             axs[i].set_xlabel('Duration (hours)')
@@ -126,37 +96,18 @@ class ActivityList:
         plt.show()
 
 
-
 def url_to_name(url):
-    """Extracts the name of a website from its URL.
-
-    Args:
-        url (str): The URL of the website.
-
-    Returns:
-        str: The name of the website.
-    """
     string_list = url.split("/")
     return string_list[2]
 
 
 def get_active_window_name():
-    """Returns the name of the currently active window.
-
-    Returns:
-        str: The name of the currently active window.
-    """
     window = win32gui.GetForegroundWindow()
     active_window_name = win32gui.GetWindowText(window)
     return active_window_name
 
 
 def get_chrome_url():
-    """Returns the URL of the currently active tab in Google Chrome.
-
-    Returns:
-        str: The URL of the currently active tab in Google Chrome.
-    """
     window = win32gui.GetForegroundWindow()
     chrome_control = auto.ControlFromHandle(window)
     edit = chrome_control.EditControl()
@@ -171,7 +122,7 @@ FIRST_TIME = True
 
 # Create an instance of ActivityList and initialize it with data from the JSON file
 activity_list = ActivityList()
-activity_list.initialize("activities.json")
+activity_list.initialize(ACTIVITIES_FILE)
 
 try:
     try:
@@ -205,6 +156,7 @@ try:
                                   **JSON_DUMP_PARAMS)
                 FIRST_TIME = False
                 ACTIVE_WINDOW_NAME = new_window_name
+                START_TIME = datetime.datetime.now()
 
             time.sleep(1)
     finally:
